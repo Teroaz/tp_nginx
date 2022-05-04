@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  server:
+    image: nginx
+    ports:
+      - "5000:80"
+      - "5001:443"
+    volumes:
+      - ./data/nginx/conf.d:/etc/nginx/conf.d
+      - ./data/nginx/logs:/var/log/nginx
+      - ./data/nginx/certs:/etc/nginx/certs
+      - ./data/nginx/html:/usr/share/nginx/html
