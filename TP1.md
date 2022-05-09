@@ -59,13 +59,20 @@ répertoire `/etc/nginx/`.
 |-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `nginx.conf`                | Configuration générale du service, ici se trouve le bloc global qui régit l'ensemble des blocs de NGINX.<br/>Par exemple, il est possible de définir l'utilisateur utilisé par le service, les paramétrages globaux du protocole HTTP (logs, compression des requêtes, certifications TLS) |
 | `sites-available/*`         | Le répertoire où les "blocs de serveur" par site peuvent être stockés. NGINX n'utilisera pas les fichiers de configuration trouvés dans ce répertoire à moins qu'ils ne soient liés au répertoire `sites-enabled`.                                                                         |
-| `sites-enabled/*`           | Le répertoire où sont stockés les "blocs serveur" activés par site. En général, ceux-ci sont créés en établissant un lien avec les fichiers de configuration qui se trouvent dans le répertoire `sites-available`.                                                                         |
+| `sites-enabled/*`           | Le répertoire où sont stockés les "blocs serveur" activés par site. En général, ceux-ci sont créés en établissant un lien symbolique avec les fichiers de configuration qui se trouvent dans le répertoire `sites-available`.                                                              |
 | `conf.d/*`                  | A la même utilité que le répertoire `sites-enabled`, cependant, il peut également être utilisé pour y stocker des configurations globales du serveur Web.                                                                                                                                  |
 | `snippets/*`                | Ce répertoire contient des fragments de configuration qui peuvent être inclus partout dans la configuration de NGINX. Les segments de configuration potentiellement répétables sont de bons candidats pour le remaniement en fragments.                                                    |
 | `/var/log/nginx/access.log` | Chaque requête adressée à votre serveur web est enregistrée dans ce fichier journal, à moins que NGINX ne soit configuré autrement.                                                                                                                                                        |
 | `/var/log/nginx/error.log`  | Chaque erreur NGINX sera enregistrée dans ce seul journal.                                                                                                                                                                                                                                 |
 
 ##### Le fichier `/etc/nginx/sites-available/default` contient la configuration du site Web par défaut. Il est possible de créer un nouveau fichier de configuration pour chaque site Web que l'on souhaite.
+
+_Par ailleurs, Il est
+possible [d'avoir plusieurs sites sur la même machine](https://webdock.io/en/docs/how-guides/shared-hosting-multiple-websites/how-configure-nginx-to-serve-multiple-websites-single-vps)
+, mais il faut utiliser l'instruction `server_name` dans le bloc server et disposer de plusieurs DNS / Sous domaines, ce
+qui n'est pas notre cas au sein de notre environnement de TP._
+
+## #2. Servir des sites Web et des ressources statiques
 
 ### Création de notre première configuration de site web :
 
@@ -77,9 +84,19 @@ répertoire `/etc/nginx/`.
     server {
         root /var/www/html/mon_site;
         
-        location {
+        location / {
             index index.html index.htm index.php;    
         }
     }
 ````
 
+- Et placer le dossier `mon_site` dans le répertoire `/var/www/html`.
+
+> ### 1. Comment remplacer la page par défaut de nginx par la configuration `mon_site` ? (Indice : `sites-enabled`)
+> ### 2. Lister toutes les images présentes dans le dossier `images` du dossier `mon_site`. (Indice : `location` & `nginx autoindex`)
+
+## 3. Configurer NGINX en tant que reverse proxy
+
+#### On parle de reverse-proxy quand une application placée en front au contact des clients, tel que le serveur Web, joue le rôle d'un intermédiaire avec des applications placées en backend, en redirigeant notamment les requêtes.
+
+<img height="220" src="https://user.oc-static.com/upload/2021/11/30/16382909620871_p3c2-1.png" width="348"/>
