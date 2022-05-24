@@ -21,7 +21,7 @@ Microsoft, Facebook, Twitter ou bien Apple.
 
 ## Pré-requis
 
-* Connexion sous Debian avoir la permission de sudo
+* Permission de sudo
 * Utilisation du terminal de commande
 * Disponibilité des 6 RPi
 
@@ -67,7 +67,7 @@ répertoire `/etc/nginx/`.
 
 ##### Le fichier `/etc/nginx/sites-available/default` contient la configuration du site Web par défaut. Il est possible de créer un nouveau fichier de configuration pour chaque site Web que l'on souhaite.
 
-_Par ailleurs, Il est
+_Par ailleurs, il est
 possible [d'avoir plusieurs sites sur la même machine](https://webdock.io/en/docs/how-guides/shared-hosting-multiple-websites/how-configure-nginx-to-serve-multiple-websites-single-vps)
 , mais il faut utiliser l'instruction `server_name` dans le bloc server et disposer de plusieurs DNS / Sous domaines, ce
 qui n'est pas notre cas au sein de notre environnement de TP._
@@ -85,18 +85,78 @@ qui n'est pas notre cas au sein de notre environnement de TP._
         root /var/www/html/mon_site;
         
         location / {
-            index index.html index.htm index.php;    
+            index index.html index.htm;    
         }
     }
 ````
 
 - Et placer le dossier `mon_site` dans le répertoire `/var/www/html`.
 
-> ### 1. Comment remplacer la page par défaut de nginx par la configuration `mon_site` ? (Indice : `sites-enabled`)
-> ### 2. Lister toutes les images présentes dans le dossier `images` du dossier `mon_site`. (Indice : `location` & `nginx autoindex`)
+> #### Exo 1. Comment remplacer la page par défaut de nginx par la configuration `mon_site` ? (Indice : `sites-enabled`)
+> #### Exo 2. Lister toutes les images présentes dans le dossier `images` du dossier `mon_site`. (Indice : `location` & `nginx autoindex`)
+> #### Exo 3. Définir une page d'erreur 404, vous ferez la page manuellement. (Indice : `error_page`)
 
 ## 3. Configurer NGINX en tant que reverse proxy
 
 #### On parle de reverse-proxy quand une application placée en front au contact des clients, tel que le serveur Web, joue le rôle d'un intermédiaire avec des applications placées en backend, en redirigeant notamment les requêtes.
 
 <img height="220" src="https://user.oc-static.com/upload/2021/11/30/16382909620871_p3c2-1.png" width="348"/>
+
+Nous ne disposons pas de serveur Backend mais nous pouvons rediriger les requêtes vers un autre serveur (celui de Google
+par exemple).
+> #### Exo 4. Modifier la location / de `mon_site.conf` afin de rediriger toutes les requêtes vers le serveur `www.google.com` (Indice : `proxy_pass`, `proxy_set_header` & `Reverse-Proxy-for-Google`)
+> #### Exo 5. Ajouter une location dans `mon_site.conf` permettant de rechercher la suite de l'URL avec le moteur de recherche de Google (Indice : `https://google.com/search?q=`, `rewrite`, `$uri`, `$args`)
+
+## 4. Mettre en place un load-balancer
+
+Le load balancing consiste à rediriger les requêtes entre plusieurs serveurs. Il permet d'assurer la scalabilité
+horizontale de l'infrastructure, et de ne pas surcharger un seul serveur.
+
+**Les 3 principaux algorithmes de load balancing utilisés sont :**
+
+- **Le round-robin (le plus simple)** : Les requêtes sont réparties uniformément entre les serveurs, en tenant compte de
+  leur pondération. Cette méthode est utilisée par défaut (il n'y a pas de directive pour l'activer).
+
+- **Le least-connections** : Une requête est envoyée au serveur ayant le plus petit nombre de connexions actives, en
+  tenant
+  compte, là encore, du poids des serveurs.
+
+- **IP Hash** : Le serveur auquel une requête est envoyée est déterminé à partir de l'adresse IP du client. Dans ce cas,
+  les
+  trois premiers octets de l'adresse IPv4 ou l'adresse IPv6 entière sont utilisés pour calculer la valeur de hachage.
+  Cette méthode garantit que les demandes provenant de la même adresse arrivent au même serveur, sauf si celui-ci n'est
+  pas disponible. Cela permet également à utilisateur de maintenir ses données de navigation (cookies, etc.), car ces
+  dernières seront stockées sur le même serveur.
+
+- Il en existe d'autres, mais inutiles à exploiter. Toutes ces méthodes sont disponibles
+  ici : https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/
+
+Un load-balance se fait en deux étapes :
+
+> #### Exo 6. Définir un upstream (`upstream`) en dehors du bloc `server` mais en restant dans le fichier `mon_site.conf`
+
+```nginx configuration
+    upstream mon_upstream {
+        # Définir l'algorithme de load balancing avant les serveurs (si aucun algorithme défini, round-robin par défaut)
+        server node1;
+        server node2;
+
+        # Il est possible de définir des poids pour chaque serveur, des serveurs en maintenance.
+        # Les serveurs en maintenance ne seront pas pris en compte dans le calcul du serveur le plus proche.
+        # Pour cela, il faut définir une directive `weight` pour chaque serveur.
+        # Pour le moment, on ne définit pas de poids.
+        
+        #server node1 weight=1;
+        #server node2 weight=2;
+        #server node3 weight=3;
+        
+    }
+  ```
+
+> #### Exo 7. Redéfinir la location '/' pour qu'elle utilise le load-balancer (Indice : `proxy_pass`)
+
+Pour tester le load-balancer, vous pouvez utiliser netcat.
+
+```bash
+    nc -l -p 8080
+```
