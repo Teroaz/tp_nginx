@@ -155,8 +155,5 @@ Un load-balance se fait en deux étapes :
 
 > #### Exo 7. Redéfinir la location '/' pour qu'elle utilise le load-balancer (Indice : `proxy_pass`)
 
-Pour tester le load-balancer, vous pouvez utiliser netcat.
-
-```bash
-    nc -l -p 8080
-```
+Pour tester le load-balancer, vous pouvez m'appeler pour réaliser des benchmarks, grâce à
+cet [outil](https://github.com/mcollina/autocannon) (Autocannon HTTP /1 Benchmark tool).
